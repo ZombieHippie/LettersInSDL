@@ -1,298 +1,167 @@
-// Adapted from http://headerphile.blogspot.com/2014/04/part-3-game-programming-in-sdl2-drawing.html
-// SDL 2.0 API by Name https://wiki.libsdl.org/CategoryAPI
-// SDL 2.0 API by Category https://wiki.libsdl.org/APIByCategory
+// Compile this program from the command line using     
+//      g++ -std=c++11 ModelSampleProgram.cpp
+// Compile this program in an IDE (CodeBlocks, VisualStudio, etc.) by 
+//     setting compiler to use C++11 standard
 
-	// Common graphic operations in SDL2
-	// SDL_RenderDrawLine  Draw a line, one pixel wide. Wider: use a thin rectangle
-	// SDL_RenderFillRect   draw a rectangle
-	// ???    write text to graphics (SDL_RWwrite?)
-	// ???	  draw a general polygon using vertices
-	// ???    draw an oval or circle (SDL_RenderDrawPoints?)
-	
-/* REMOVE TO USE GRAPHICS
-#include <SDL.h>
-END OF COMMENT TO USE GRAPHICS
-*/
-	
+// Each of these include files is required to use some function 
+// that is defined in that file. 
 #include <cstdlib>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <fstream>
 #include <cstring>
-
-// This line allows commonly-used functions to be used without specifying the 
-// library in which that function is defined. For instance, this line allows
-// the use of "cout" rather than the full specification "cout"
-using namespace std;
-
-
-
+#include <algorithm>
 
 //--------------------------------------------------------------------------
-class Point
-{
+//Using SDL and standard IO
+#include <SDL.h>
 
-    public:
-    
-        // Constructor. Any setup operation you wish for the class.
-        Point()
-        {
-            x = 0; y = 0;  
-        } // end constructor
-        Point(int a, int b)
-        {
-            x = a; y = b;  
-        } // end constructor
+//Screen dimension constants
+const int SCREEN_WIDTH = 640;
+const int SCREEN_HEIGHT = 480;
 
-        int getX() { return x; }
-        int getY() { return y; }
-    
-    private:
-        int x = 0; 
-        int y = 0;
-        
+class Point {
+public:
+	// Constructor. Any setup operation you wish for the class.
+	Point(int px, int py) {
+		x = px; y = py;
+		key = INFINITY;
+		pi = nullptr;
+	} // end constructor
+	double key;
+	Point* pi;
+	int getX() { return x; }
+	int getY() { return y; }
+	double dist(const Point &p) {
+		int c = std::pow(p.x - x, 2) + std::pow(p.y - y, 2);
+		return std::sqrt(c);
+	}
+	friend std::ostream& operator<<(std::ostream& os, const Point& p);
+private:
+	int x;
+	int y;
 }; // end class Point
+// Point operator stream
+std::ostream& operator<<(std::ostream& os, const Point& p) {
+	os << '(' << p.x << ',' << p.y << ')';
+	return os;
+}
 
+class Application {
+public:
+	Application() {}
+	void run() {
+		SDLDriver driver;
+		// Step F
+		waitUntilQuit(&driver);
+	}
+	//--------------------------------------------------------------------------
+	//--------------------------------------------------------------------------
+	//--------------------------------------------------------------------------
+	// This is the important stuff, nothing outside of here should change much
+private:
+	// Step F
+	class SDLDriver {
+		//The window we'll be rendering to
+		SDL_Window* gWindow = NULL;
 
-// NOTE: DO NOT declare with empty parentheses, as vector<Point> myPointvector();
-vector<Point> myPointvector;  // vector will expand as needed
+		//The window renderer
+		SDL_Renderer* gRenderer = NULL;
 
-// Graphics window sizes
-int posX = 100;
-int posY = 200;
-int sizeX = 300;
-int sizeY = 400;
-int numberEdgesToDraw = 0;
+		const int size = 5;
+	public:
+		SDLDriver() {
+			gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+			if (gWindow == NULL)
+			{
+				printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
+			}
+			else
+			{
+				//Create renderer for window
+				gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
+				if (gRenderer == NULL)
+				{
+					printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
+				}
+				else
+				{
+					//Initialize renderer color
+					SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+				}
+			}
+		}
+		void drawEdge(Point* a, Point* b) {
+			drawLine(a, b, 0x11, 0x11, 0x11);
+		}
+		void drawPoint(Point* p) { drawDot(p, 1, 0xFF, 0xFF, 0x00); }
+		void drawRoot(Point* p) { drawDot(p, 2, 0xFF, 0x00, 0xFF); }
+		void delay(int milliseconds) {
+			SDL_Delay(milliseconds);
+		}
+		void close() {
+			//Destroy window	
+			SDL_DestroyRenderer(gRenderer);
+			SDL_DestroyWindow(gWindow);
+			gWindow = NULL;
+			gRenderer = NULL;
 
+			//Quit SDL subsystems
+			SDL_Quit();
+		}
+	private:
+		void drawDot(Point* p, int radius, Uint8 color_r, Uint8 color_g, Uint8 color_b) {
+			//Update screen
+			SDL_Rect fillRect = { p->getX() * size - radius * size, p->getY() * size - radius * size, radius * 2 * size, radius * 2 * size };
+			SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0x33);
+			SDL_RenderFillRect(gRenderer, &fillRect);
+			SDL_RenderPresent(gRenderer);
+		}
+		void drawLine(Point* a, Point* b, Uint8 color_r, Uint8 color_g, Uint8 color_b) {
+			if (a != nullptr && b != nullptr) {
+				SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0x33);
+				SDL_RenderDrawLine(gRenderer, a->getX() * size, a->getY() * size, b->getX() * size, b->getY() * size);
+				//Update screen
+				SDL_RenderPresent(gRenderer);
+			}
+		}
+	};
+	void waitUntilQuit(SDLDriver *driver) {
+		//Main loop flag
+		bool quit = false;
 
-/* REMOVE TO USE GRAPHICS
-SDL_Window* window;
-SDL_Renderer* renderer;
+		//Event handler
+		SDL_Event e;
 
-bool InitEverything();
-bool InitSDL();
-bool CreateWindow();
-bool CreateRenderer();
-void SetupRenderer();
+		//While application is running
+		while (!quit)
+		{
+			//Handle events on queue
+			while (SDL_PollEvent(&e) != 0)
+			{
+				//User requests quit
+				if (e.type == SDL_QUIT)
+				{
+					quit = true;
+				}
+			}
+		}
+		driver->close();
+	}
+};
 
-void Render();
-void RunGame();
-
-SDL_Rect playerPos;
-END OF COMMENT TO USE GRAPHICS
-*/
-	
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 
 // Pass arguments or parameters from command-line execution. argc is the count of
 // those parameters, including the executable filename. argv[] is an array of the 
 // parameters.
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-    string token;
-    int xValue, yValue;
-    ifstream fin;
-
-
-	cout << "\nHello World\n";
-
-    // Check the number of arguments. Expected: filename of a file
-    if (argc != 2)  // This check is often hardcoded
-    {   // If failure in parameters, offer advice for correction
-        cout << "\nThis program uses command-line argument.\n";
-        cout << "Usage: a.exe <filename>\n";
-        exit(0);
-    }
-
-
-    try  // All lines within this block are part of the same exception handler
-    {
-        fin.open(argv[1]);
-    } 
-    catch (exception& ex) 
-    {
-        cout << ex.what();  // display standard explanation of the exception
-        exit(0);  // exit the program
-    }
-            
-   
-    // Read from the file, one token at a time. If the type of token is known, it
-    // can be read into a corresponding variable type, such as 
-    //          in >> x;    // Read the first item into an integer variable x.
-    //          in >> str;  // Read the next item into a string variable str.
-            
-    while (fin >> xValue)
-    {
-        // Do something with the element read from the file
-		if (xValue == -9999)  // end point list sentinel value
-		{
-			Point dummyPoint(-9999, -9999);
-			myPointvector.push_back(dummyPoint);  // vector will expand as needed
-			break;  // stop reading from file
-		}
-        cout << "xValue is " << xValue << endl;
-		
-		fin >> yValue;
-
-
-		// Transform the (x,y) point to the graphic coordinate system:
-			//   Shift all x values by +20
-			//   Shift all y values by +20
-			//   Scale x and y values by 8
-			//   Invert y axis values by subtracting from 400
-
-			
-		cout << "Now myPointvector has size " << myPointvector.size() << endl;
-
-		
-		
-    } // end while
-                
-    fin.close();
-
-
-	/* REMOVE TO USE GRAPHICS
-	
-	if ( !InitEverything() )   // Call to initialize graphics
-		return -1;
-
-	RunGame();
-	
-	END OF COMMENT TO USE GRAPHICS
-	*/
-	
+	Application app;
+	app.run();
+	return 0;
 } // end main
 
-
-/* REMOVE TO USE GRAPHICS
-
-void RunGame()
-{
-	bool loop = true;
-
-	while ( loop )
-	{
-
-		Render();
-
-		// Add a 16msec delay to make our game run at ~60 fps
-		SDL_Delay( 200 );
-		
-		// increase the number of lines to draw
-		if (numberEdgesToDraw < myPointvector.size()) 
-			numberEdgesToDraw++; 
-		
-	}
-}
-
-
-// -----------------------------------------------------------------------
-// Evidently a function named "Render()" is essential
-void Render()
-{
-	
-	// Common graphic operations in SDL2
-	// SDL_RenderDrawLine  Draw a line, one pixel wide. Wider: use a thin rectangle
-	// SDL_RenderFillRect   draw a rectangle
-	// ???    write text to graphics (SDL_RWwrite?)
-	// ???	  draw a general polygon using vertices
-	// ???    draw an oval or circle (SDL_RenderDrawPoints?)
-	
-
-	// Clear the window 
-	SDL_RenderClear( renderer );
-
-	// Change color to blue!  Parameters are Red, Green, Blue, Alpha
-	SDL_SetRenderDrawColor( renderer, 51, 51, 204, 255 );
-
-	// Render our "player"
-	//SDL_RenderFillRect( renderer, &playerPos );
-
-	
-
-	
-	// Draw an increasing number of edges
-	for (int i = 0; i < numberEdgesToDraw; i++) 
-	{
-		if (myPointvector.at(i).getX() == -9999) break;  // no more edges
-		
-		if (myPointvector.at(i).getX() == -999) continue; // don't draw from this sentinel value
-		
-		if (myPointvector.at(i+1).getX() == -999) continue; // don't draw to this sentinel value
-		
-		
-		// SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
-		
-		
-		// ???????????? Make a call to SDL_RenderDrawLine(renderer, x1, y1, x2, y2) to draw an edge
-	}
-
-	// Change color to green!  Parameters are Red, Green, Blue, Alpha
-	SDL_SetRenderDrawColor( renderer, 102, 204, 0, 255 );
-
-	// Render the changes above
-	SDL_RenderPresent( renderer);
-}
-
-
-bool InitEverything()
-{
-	if ( !InitSDL() )
-		return false;
-
-	if ( !CreateWindow() )
-		return false;
-
-	if ( !CreateRenderer() )
-		return false;
-
-	SetupRenderer();
-
-	return true;
-}
-bool InitSDL()
-{
-	if ( SDL_Init( SDL_INIT_EVERYTHING ) == -1 )
-	{
-		cout << " Failed to initialize SDL : " << SDL_GetError() << endl;
-		return false;
-	}
-
-	return true;
-}
-bool CreateWindow()
-{
-	window = SDL_CreateWindow( "Server", posX, posY, sizeX, sizeY, 0 );
-
-	if ( window == NULL) //  8/19/15 KV  nullptr )
-	{
-		cout << "Failed to create window : " << SDL_GetError();
-		return false;
-	}
-
-	return true;
-}
-bool CreateRenderer()
-{
-	renderer = SDL_CreateRenderer( window, -1, 0 );
-
-	if ( renderer == NULL) //  8/19/15 KV  nullptr )
-	{
-		cout << "Failed to create renderer : " << SDL_GetError();
-		return false;
-	}
-
-	return true;
-}
-void SetupRenderer()
-{
-	// Set size of renderer to the same as window
-	SDL_RenderSetLogicalSize( renderer, sizeX, sizeY );
-
-	// Set color of renderer background
-	SDL_SetRenderDrawColor( renderer, 102, 204, 0, 255 );
-}
-
-END OF COMMENT TO USE GRAPHICS
-*/
-	
