@@ -25,29 +25,31 @@ const int SCREEN_HEIGHT = 480;
 class Point {
 public:
 	// Constructor. Any setup operation you wish for the class.
-	Point(int px, int py) {
+	Point(float px, float py) {
 		x = px; y = py;
-		key = INFINITY;
-		pi = nullptr;
 	} // end constructor
-	double key;
-	Point* pi;
-	int getX() { return x; }
-	int getY() { return y; }
-	double dist(const Point &p) {
-		int c = std::pow(p.x - x, 2) + std::pow(p.y - y, 2);
-		return std::sqrt(c);
+	float getX() { return x; }
+	float getY() { return y; }
+	// return new Point scaled version of this Point
+	Point scale(float scale) {
+		Point res(x * scale, y * scale);
+		return res;
 	}
+
 	friend std::ostream& operator<<(std::ostream& os, const Point& p);
 private:
-	int x;
-	int y;
+	float x;
+	float y;
 }; // end class Point
 // Point operator stream
 std::ostream& operator<<(std::ostream& os, const Point& p) {
 	os << '(' << p.x << ',' << p.y << ')';
 	return os;
 }
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+// This is the important stuff, nothing outside of here should be terribly unique
 
 typedef std::vector<Point*> Line;
 typedef std::vector<Point> DrawLine;
@@ -59,39 +61,70 @@ public:
 	SymbolData(std::vector<Line> givenLines): lines(givenLines) {};
 	// returns a vector of a series of points that will draw the symbol
 	// at the correct scale
-	std::vector<DrawLine> getDrawLines(float scale);
+	std::vector<DrawLine> getDrawLines(float scale) {
+		std::vector<DrawLine> res;
+		for (std::vector<Line>::iterator itLn = lines.begin(); itLn < lines.end(); itLn++) {
+			DrawLine newDrawLine;
+			for (Line::iterator itP = itLn->begin(); itP < itLn->end(); itP++) {
+				Point *p = *itP;
+				// add scaled version of line to DrawLine
+				newDrawLine.push_back(p->scale(scale));
+			}
+			// add draw line to results
+			res.push_back(newDrawLine);
+		}
+		return res;
+	}
 };
 
 class SymbolManager {
-	std::map<char, SymbolData> *charsToSymbolData;
+	std::map<char, SymbolData> charsToSymbolData;
 public:
 	static constexpr float CHAR_WIDTH = 9.0; // width of symbols
 	static constexpr float TYPE_KERNING = .5; // distance between symbols
 	static constexpr float CHAR_HEIGHT = 16.0; // height of symbols
 	SymbolManager() {
-		charsToSymbolData = new std::map<char, SymbolData>();
+		std::map<char, SymbolData> charsToSymbolData;
+
+		// add 'p' test data
+		Point line1p1(0,6);
+		Point line1p2(0,15);
+		Line line1 {
+			&line1p1, &line1p2
+		};
+		Point line2p1(2,6);
+		Point line2p2(5,6);
+		Point line2p3(7,8);
+		Point line2p4(7,10);
+		Point line2p5(5,12);
+		Point line2p6(2,12);
+		Line line2 {
+			&line2p1, &line2p2, &line2p3,
+			&line2p4, &line2p5, &line2p6
+		};
+		std::vector<Line> lines;
+		lines.push_back(line1);
+		lines.push_back(line2);
+		SymbolData testA(lines);
+		std::pair<char, SymbolData> kvPair('p', testA);
+		charsToSymbolData.insert(kvPair);
 	}
-	~SymbolManager() {
-		delete charsToSymbolData;
+	SymbolData *getSymbolFromChar (char c) {
+		return &charsToSymbolData[c];
 	}
-	SymbolData *getSymbolFromChar (char c);
 };
 
 class Application {
 public:
 	Application() {}
 	void run() {
-		//--------------------------------------------------------------------------
-		//--------------------------------------------------------------------------
-		//--------------------------------------------------------------------------
-		// This is the important stuff, nothing outside of here should change much
 		SDLDriver driver;
 
 		// Make a map of the letters to points
 		SymbolManager manager;
 
 		// draw sample stuff
-		drawChar(&manager, 'a', 10, 10, 1.0);
+		drawChar(&manager, 'p', 10, 10, 1.0);
 		// drawChars(char[]{'C','s','c',' ','3','2','5'}, x, y)		
 
 
@@ -105,12 +138,12 @@ private:
 	// looks up symbol, and draws
 	void drawChar(SymbolManager *manager, char c, float x, float y, float scale) {
 		SymbolData *symbol_to_be_drawn = manager->getSymbolFromChar(c);
-		std::vector<std::vector<Point>> lns = symbol_to_be_drawn->getDrawLines(scale);
-		for (std::vector<std::vector<Point>>::iterator itLn = lns.begin(); itLn < lns.end(); itLn++) {
-			std::vector<Point> points = *itLn;
+		std::vector<DrawLine> lns = symbol_to_be_drawn->getDrawLines(scale);
+		for (std::vector<DrawLine>::iterator itLn = lns.begin(); itLn < lns.end(); itLn++) {
+			DrawLine points = *itLn;
 			// begin drawing lines with SDL
 			std::cout << "Start drawing line" << std::endl;
-			for (std::vector<Point>::iterator itP = points.begin(); itP < points.end(); itP++) {
+			for (DrawLine::iterator itP = points.begin(); itP < points.end(); itP++) {
 				Point pointToDraw = *itP;
 				std::cout << pointToDraw << std::endl;
 			}
@@ -129,7 +162,7 @@ private:
 		}
 	}
 
-	// This is the important stuff, nothing outside of here should change much
+	// This is the important stuff, nothing outside of here should be terribly unique
 	//--------------------------------------------------------------------------
 	//--------------------------------------------------------------------------
 	//--------------------------------------------------------------------------
