@@ -6,7 +6,7 @@
 
 Please do not commit any additional cpp source files, or header files to the repo, all versioning should be handled by a history of commits. Please do not knowingly commit broken code. If problems arise in code, it would be preferred to use Github issue tracking for project specific communication. 
 
-[`/Project-1-test.cpp`](/Project-1-test.cpp) is provided as a sample cpp hello world file for testing your g++ compilation environment.
+[`/Project1-test.cpp`](/Project1-test.cpp) is provided as a sample cpp hello world file for testing your g++ compilation environment.
 
 For simplicity, each developer has their own distribution files folder [`./dist-cole`](/dist-cole), [`./dist-josiah`](/dist-josiah), and [`./dist-andrew`](/dist-andrew). This is where each compilation file should compile to.
 
