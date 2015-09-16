@@ -12,6 +12,7 @@
 #include <fstream>
 #include <cstring>
 #include <algorithm>
+#include <map>
 
 //--------------------------------------------------------------------------
 //Using SDL and standard IO
@@ -48,20 +49,87 @@ std::ostream& operator<<(std::ostream& os, const Point& p) {
 	return os;
 }
 
+class SymbolData {
+private:
+	std::vector<std::vector<*Point>> points;
+public:
+	// returns a vector of a series of points that will draw the symbol
+	// at the correct scale
+	std::vector<std::vector<Point>> getDrawLines(float scale);
+};
+
+class SymbolManager {
+	std::map<char, SymbolData> charsToSymbolData;
+public:
+	static constexpr float CHAR_WIDTH = 9.0; // width of symbols
+	static constexpr float TYPE_KERNING = .5; // distance between symbols
+	static constexpr float CHAR_HEIGHT = 16.0; // height of symbols
+	SymbolManager() {
+		charsToSymbolData = new std::map<char, *SymbolData>();
+	}
+	~SymbolManager() {
+		delete charsToSymbolData;
+	}
+	SymbolData *getSymbolFromChar (char c);
+};
+
 class Application {
 public:
 	Application() {}
 	void run() {
+		//--------------------------------------------------------------------------
+		//--------------------------------------------------------------------------
+		//--------------------------------------------------------------------------
+		// This is the important stuff, nothing outside of here should change much
 		SDLDriver driver;
-		// Step F
+
+		// Make a map of the letters to points
+		SymbolManager manager;
+
+		// draw sample stuff
+		drawChar(&manager, 'a', 10, 10, 1.0)
+		// drawChars(char[]{'C','s','c',' ','3','2','5'}, x, y)		
+
+
+
 		waitUntilQuit(&driver);
 	}
-	//--------------------------------------------------------------------------
-	//--------------------------------------------------------------------------
-	//--------------------------------------------------------------------------
-	// This is the important stuff, nothing outside of here should change much
 private:
-	// Step F
+	// Use the symbol Manager to interact with holding the symbols
+	// map of letters to point maps
+
+	// looks up symbol, and draws
+	void drawChar(SymbolManager *manager, char c, float x, float y, float scale) {
+		SymbolManager::Symbol *symbol_to_be_drawn = manager->getSymbolFromChar(c);
+		std::vector<std::vector<Point>> lns = symbol_to_be_drawn->getDrawLines(scale);
+		for (std::vector<std::vector<Point>>::iterator itLn = lns.begin(); itLn < itLn.end(); itLn++) {
+			std::vector<Point> points = *itLn;
+			// begin drawing lines with SDL
+			std::cout << "Start drawing line" << std::endl;
+			for (std::vector<Point>::iterator itP = points.begin(); itP < points.end(); itP++) {
+				Point pointToDraw = *itP;
+				std::cout << pointToDraw << std::endl;
+			}
+			// end drawing lines with SDL
+			std::cout << "End drawing line" << std::endl;
+		}
+	}
+	// looks up each symbol and draws
+	void drawChars(SymbolManager *manager, char[] chars, float x, float y, float scale) {
+		float dx = SymbolManager.CHAR_WIDTH * scale;
+		float char_relative_x;
+		for (int char_index = 0; char_index < len(chars); char_index++) {
+			char_relative_x = scale * float(char_index) * SymbolManager.TYPE_KERNING;
+			drawChar(manager, chars[char_index], x + char_relative_x, y, scale);
+		}
+	}
+
+	// This is the important stuff, nothing outside of here should change much
+	//--------------------------------------------------------------------------
+	//--------------------------------------------------------------------------
+	//--------------------------------------------------------------------------
+
+	// This is the basic helper driver that we can use for drawing lines onto		
 	class SDLDriver {
 		//The window we'll be rendering to
 		SDL_Window* gWindow = NULL;
@@ -96,7 +164,6 @@ private:
 			drawLine(a, b, 0x11, 0x11, 0x11);
 		}
 		void drawPoint(Point* p) { drawDot(p, 1, 0xFF, 0xFF, 0x00); }
-		void drawRoot(Point* p) { drawDot(p, 2, 0xFF, 0x00, 0xFF); }
 		void delay(int milliseconds) {
 			SDL_Delay(milliseconds);
 		}
