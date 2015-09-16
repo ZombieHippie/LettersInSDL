@@ -49,23 +49,27 @@ std::ostream& operator<<(std::ostream& os, const Point& p) {
 	return os;
 }
 
+typedef std::vector<Point*> Line;
+typedef std::vector<Point> DrawLine;
+
 class SymbolData {
 private:
-	std::vector<std::vector<*Point>> points;
+	std::vector<Line> lines;
 public:
+	SymbolData(std::vector<Line> givenLines): lines(givenLines) {};
 	// returns a vector of a series of points that will draw the symbol
 	// at the correct scale
-	std::vector<std::vector<Point>> getDrawLines(float scale);
+	std::vector<DrawLine> getDrawLines(float scale);
 };
 
 class SymbolManager {
-	std::map<char, SymbolData> charsToSymbolData;
+	std::map<char, SymbolData> *charsToSymbolData;
 public:
 	static constexpr float CHAR_WIDTH = 9.0; // width of symbols
 	static constexpr float TYPE_KERNING = .5; // distance between symbols
 	static constexpr float CHAR_HEIGHT = 16.0; // height of symbols
 	SymbolManager() {
-		charsToSymbolData = new std::map<char, *SymbolData>();
+		charsToSymbolData = new std::map<char, SymbolData>();
 	}
 	~SymbolManager() {
 		delete charsToSymbolData;
@@ -87,7 +91,7 @@ public:
 		SymbolManager manager;
 
 		// draw sample stuff
-		drawChar(&manager, 'a', 10, 10, 1.0)
+		drawChar(&manager, 'a', 10, 10, 1.0);
 		// drawChars(char[]{'C','s','c',' ','3','2','5'}, x, y)		
 
 
@@ -100,9 +104,9 @@ private:
 
 	// looks up symbol, and draws
 	void drawChar(SymbolManager *manager, char c, float x, float y, float scale) {
-		SymbolManager::Symbol *symbol_to_be_drawn = manager->getSymbolFromChar(c);
+		SymbolData *symbol_to_be_drawn = manager->getSymbolFromChar(c);
 		std::vector<std::vector<Point>> lns = symbol_to_be_drawn->getDrawLines(scale);
-		for (std::vector<std::vector<Point>>::iterator itLn = lns.begin(); itLn < itLn.end(); itLn++) {
+		for (std::vector<std::vector<Point>>::iterator itLn = lns.begin(); itLn < lns.end(); itLn++) {
 			std::vector<Point> points = *itLn;
 			// begin drawing lines with SDL
 			std::cout << "Start drawing line" << std::endl;
@@ -115,11 +119,12 @@ private:
 		}
 	}
 	// looks up each symbol and draws
-	void drawChars(SymbolManager *manager, char[] chars, float x, float y, float scale) {
-		float dx = SymbolManager.CHAR_WIDTH * scale;
+	void drawChars(SymbolManager *manager, char chars[], float x, float y, float scale) {
+		float dx = SymbolManager::CHAR_WIDTH * scale;
 		float char_relative_x;
-		for (int char_index = 0; char_index < len(chars); char_index++) {
-			char_relative_x = scale * float(char_index) * SymbolManager.TYPE_KERNING;
+		int length_of_chars = sizeof(chars) / sizeof(chars[0]);
+		for (int char_index = 0; char_index < length_of_chars; char_index++) {
+			char_relative_x = scale * float(char_index) * SymbolManager::TYPE_KERNING;
 			drawChar(manager, chars[char_index], x + char_relative_x, y, scale);
 		}
 	}
