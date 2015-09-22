@@ -58,6 +58,9 @@ class SymbolData {
 private:
 	std::vector<Line> lines;
 public:
+	SymbolData() {
+		std::vector<Line> lines();
+	};
 	SymbolData(std::vector<Line> givenLines): lines(givenLines) {};
 	// returns a vector of a series of points that will draw the symbol
 	// at the correct scale
