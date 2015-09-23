@@ -24,13 +24,13 @@ const int SCREEN_HEIGHT = 480;
 class Point {
 public:
 	// Constructor. Any setup operation you wish for the class.
-	Point(float px, float py) {
-		x = px; y = py;
+	Point(float px, float py) : x(px), y(py){
+		std::cout << "x(" << x << ") y(" << y << ")" << std::endl;
 	} // end constructor
-	float getX() { return x; }
-	float getY() { return y; }
+	float getX() const { return x; }
+	float getY() const { return y; }
 	// return new Point scaled version of this Point
-	Point scale(float scale) {
+	Point scale(float scale) const {
 		Point res(x * scale, y * scale);
 		return res;
 	}
@@ -44,8 +44,8 @@ public:
 	}
 	friend std::ostream& operator<<(std::ostream& os, const Point& p);
 private:
-	float x;
-	float y;
+	const float x;
+	const float y;
 }; // end class Point
 // Point operator stream
 std::ostream& operator<<(std::ostream& os, const Point& p) {
@@ -57,35 +57,96 @@ std::ostream& operator<<(std::ostream& os, const Point& p) {
 //--------------------------------------------------------------------------
 // This is the important stuff, nothing outside of here should be terribly unique
 
-typedef std::vector<Point*> Line;
-typedef std::vector<Point> DrawLine;
+typedef std::vector<Point> Line;
 
 class SymbolData {
 private:
 	std::vector<Line> lines;
 public:
-	SymbolData() {
-		std::vector<Line> lines();
-		std::cout << "Declared empty" << std::endl;
-	};
-	SymbolData(std::vector<Line> givenLines): lines(givenLines) {
-		std::cout << "Declared with " << lines.size() << " lines" << std::endl;
-	};
+	// called when accessing map char that does not exist
+	SymbolData() {};
+	SymbolData(std::vector<Line> givenLines): lines(givenLines) {};
 	// returns a vector of a series of points that will draw the symbol
 	// at the correct scale
-	std::vector<DrawLine> getDrawLines(float scale) {
-		std::vector<DrawLine> res;
+	std::vector<Line> getDrawLines(float scale) {
+		std::vector<Line> res;
 		for (std::vector<Line>::iterator itLn = lines.begin(); itLn < lines.end(); itLn++) {
-			DrawLine newDrawLine;
+			Line newDrawLine;
 			for (Line::iterator itP = itLn->begin(); itP < itLn->end(); itP++) {
-				Point *p = *itP;
+				Point p = *itP;
 				// add scaled version of line to DrawLine
-				newDrawLine.push_back(p->scale(scale));
+				newDrawLine.push_back(p.scale(scale));
 			}
 			// add draw line to results
 			res.push_back(newDrawLine);
 		}
 		return res;
+	}
+};
+
+// This is the basic helper driver that we can use for drawing lines onto		
+class SDLDriver {
+	//The window we'll be rendering to
+	SDL_Window* gWindow = NULL;
+
+	//The window renderer
+	SDL_Renderer* gRenderer = NULL;
+
+	const int size = 5;
+public:
+	SDLDriver() {
+		gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+		if (gWindow == NULL)
+		{
+			printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
+		}
+		else
+		{
+			//Create renderer for window
+			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
+			if (gRenderer == NULL)
+			{
+				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
+			}
+			else
+			{
+				//Initialize renderer color
+				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+			}
+		}
+	}
+	void drawEdge(Point* a, Point* b) {
+		drawLine(a, b, 0xaa, 0xaa, 0xaa);
+	}
+	void drawPoint(Point* p) { drawDot(p, 1, 0xFF, 0xFF, 0x00); }
+	void delay(int milliseconds) {
+		SDL_Delay(milliseconds);
+	}
+	void close() {
+		//Destroy window	
+		SDL_DestroyRenderer(gRenderer);
+		SDL_DestroyWindow(gWindow);
+		gWindow = NULL;
+		gRenderer = NULL;
+
+		//Quit SDL subsystems
+		SDL_Quit();
+	}
+private:
+	void drawDot(Point* p, int radius, Uint8 color_r, Uint8 color_g, Uint8 color_b) {
+		//Update screen
+		SDL_Rect fillRect = { p->getX() * size - radius * size, p->getY() * size - radius * size, radius * 2 * size, radius * 2 * size };
+		SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0x33);
+		SDL_RenderFillRect(gRenderer, &fillRect);
+		SDL_RenderPresent(gRenderer);
+	}
+	void drawLine(Point* a, Point* b, Uint8 color_r, Uint8 color_g, Uint8 color_b) {
+		if (a != nullptr && b != nullptr) {
+			SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0x33);
+			SDL_RenderDrawLine(gRenderer, a->getX() * size, a->getY() * size, b->getX() * size, b->getY() * size);
+			//Update screen
+			SDL_RenderPresent(gRenderer);
+		}
 	}
 };
 
@@ -108,7 +169,7 @@ public:
 		Point line1p1(0,6);
 		Point line1p2(0,15);
 		Line line1 {
-			&line1p1, &line1p2
+			line1p1, line1p2
 		};
 		Point line2p1(2,6);
 		Point line2p2(5,6);
@@ -117,33 +178,27 @@ public:
 		Point line2p5(5,12);
 		Point line2p6(2,12);
 		Line line2 {
-			&line2p1, &line2p2, &line2p3,
-			&line2p4, &line2p5, &line2p6
+			line2p1, line2p2, line2p3,
+			line2p4, line2p5, line2p6
 		};
 		std::vector<Line> lines;
 		lines.push_back(line1);
 		lines.push_back(line2);
 		SymbolData testA(lines);
-		char p = 'p';
 		charsToSymbolData.insert(Map::value_type("p", testA));
-		SymbolData p_lines = charsToSymbolData[&p];
-		std::cout << "accessed p: " << p_lines.getDrawLines(1.0).size() << std::endl;
 	}
 	SymbolData *getSymbolFromChar (char c) {
-		std::cout << "Accessing " << c << " from map." << std::endl;
 		char * cptr = &c;
-		char p = 'p';
-		std::cout << "Compare " << strcmp(cptr, &p) << " " << cptr << " " << p << std::endl;
-		//return &charsToSymbolData[cptr];
-		char p1 = 'm';
-		std::cout << "Compare " << strcmp(cptr, &p1) << " " << p1 <<  std::endl;
-		char p2 = 'q';
-		std::cout << "Compare " << strcmp(cptr, &p2) << " " << p2 <<  std::endl;
-		return &charsToSymbolData[cptr];
+    	Map::iterator it = charsToSymbolData.find(cptr);
+    	return &((*it).second);
 	}
 };
 
 class Application {
+	// these objects instantiated with the object
+	SDLDriver driver;
+	// Make a map of the letters to points
+	SymbolManager manager;
 public:
 	Application() {}
 	void run() {
@@ -151,50 +206,50 @@ public:
 		// Set output of program to file
 		freopen( "project1.log", "wt", stdout ); 
 		freopen( "project1.log", "wt", stderr );
-		
-		SDLDriver driver;
 
-		// Make a map of the letters to points
-		SymbolManager manager;
 
 		// draw sample stuff
-		drawChar(&manager, 'p', 10, 10, 1.0);
-		// drawChars(char[]{'C','s','c',' ','3','2','5'}, x, y)		
+		drawChar('p', 10, 10, 1.0);
+		// drawChars(&driver, char[]{'C','s','c',' ','3','2','5'}, x, y)
 
 
 
-		//waitUntilQuit(&driver);
+		waitUntilQuit();
 	}
 private:
 	// Use the symbol Manager to interact with holding the symbols
 	// map of letters to point maps
 
 	// looks up symbol, and draws
-	void drawChar(SymbolManager *manager, char c, float x, float y, float scale) {
-		SymbolData *symbol_to_be_drawn = manager->getSymbolFromChar(c);
-		std::cout << "got " << c << " from manager" << std::endl;
-		std::vector<DrawLine> lns = symbol_to_be_drawn->getDrawLines(scale);
+	void drawChar(char c, float x, float y, float scale) {
+		SymbolData *symbol_to_be_drawn = manager.getSymbolFromChar(c);
+		std::vector<Line> lns = symbol_to_be_drawn->getDrawLines(scale);
 		std::cout << "Drawing character: '" << c << "' (" << lns.size() << " lines)" << std::endl;
-		for (std::vector<DrawLine>::iterator itLn = lns.begin(); itLn < lns.end(); itLn++) {
-			DrawLine points = *itLn;
+		for (std::vector<Line>::iterator itLn = lns.begin(); itLn < lns.end(); itLn++) {
+			Line points = *itLn;
 			// begin drawing lines with SDL
 			printf("Start drawing line\n");
-			for (DrawLine::iterator itP = points.begin(); itP < points.end(); itP++) {
+			Point * lastPoint = nullptr;
+			for (Line::iterator itP = points.begin(); itP < points.end(); itP++) {
 				Point pointToDraw = *itP;
 				printf(pointToDraw.toString().c_str());
+				if (lastPoint != nullptr) {
+					driver.drawEdge(&pointToDraw, lastPoint);
+				}
+				lastPoint = &pointToDraw;
 			}
 			// end drawing lines with SDL
 			printf("\nEnd drawing line\n");
 		}
 	}
 	// looks up each symbol and draws
-	void drawChars(SymbolManager *manager, char chars[], float x, float y, float scale) {
+	void drawChars(char chars[], float x, float y, float scale) {
 		float dx = SymbolManager::CHAR_WIDTH * scale;
 		float char_relative_x;
 		int length_of_chars = sizeof(chars) / sizeof(chars[0]);
 		for (int char_index = 0; char_index < length_of_chars; char_index++) {
 			char_relative_x = scale * float(char_index) * SymbolManager::TYPE_KERNING;
-			drawChar(manager, chars[char_index], x + char_relative_x, y, scale);
+			drawChar(chars[char_index], x + char_relative_x, y, scale);
 		}
 	}
 
@@ -203,72 +258,7 @@ private:
 	//--------------------------------------------------------------------------
 	//--------------------------------------------------------------------------
 
-	// This is the basic helper driver that we can use for drawing lines onto		
-	class SDLDriver {
-		//The window we'll be rendering to
-		SDL_Window* gWindow = NULL;
-
-		//The window renderer
-		SDL_Renderer* gRenderer = NULL;
-
-		const int size = 5;
-	public:
-		SDLDriver() {
-			gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-			if (gWindow == NULL)
-			{
-				printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
-			}
-			else
-			{
-				//Create renderer for window
-				gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
-				if (gRenderer == NULL)
-				{
-					printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
-				}
-				else
-				{
-					//Initialize renderer color
-					SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-				}
-			}
-		}
-		void drawEdge(Point* a, Point* b) {
-			drawLine(a, b, 0x11, 0x11, 0x11);
-		}
-		void drawPoint(Point* p) { drawDot(p, 1, 0xFF, 0xFF, 0x00); }
-		void delay(int milliseconds) {
-			SDL_Delay(milliseconds);
-		}
-		void close() {
-			//Destroy window	
-			SDL_DestroyRenderer(gRenderer);
-			SDL_DestroyWindow(gWindow);
-			gWindow = NULL;
-			gRenderer = NULL;
-
-			//Quit SDL subsystems
-			SDL_Quit();
-		}
-	private:
-		void drawDot(Point* p, int radius, Uint8 color_r, Uint8 color_g, Uint8 color_b) {
-			//Update screen
-			SDL_Rect fillRect = { p->getX() * size - radius * size, p->getY() * size - radius * size, radius * 2 * size, radius * 2 * size };
-			SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0x33);
-			SDL_RenderFillRect(gRenderer, &fillRect);
-			SDL_RenderPresent(gRenderer);
-		}
-		void drawLine(Point* a, Point* b, Uint8 color_r, Uint8 color_g, Uint8 color_b) {
-			if (a != nullptr && b != nullptr) {
-				SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0x33);
-				SDL_RenderDrawLine(gRenderer, a->getX() * size, a->getY() * size, b->getX() * size, b->getY() * size);
-				//Update screen
-				SDL_RenderPresent(gRenderer);
-			}
-		}
-	};
-	void waitUntilQuit(SDLDriver *driver) {
+	void waitUntilQuit() {
 		//Main loop flag
 		bool quit = false;
 
@@ -288,7 +278,7 @@ private:
 				}
 			}
 		}
-		driver->close();
+		driver.close();
 	}
 };
 
