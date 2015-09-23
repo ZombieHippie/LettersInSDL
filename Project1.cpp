@@ -129,13 +129,13 @@ public:
 		char p = 'p';
 		std::pair<char *, SymbolData> kvPair(&p, testA);
 		charsToSymbolData.insert(kvPair);
-		SymbolData p_lines = charsToSymbolData[p];
+		SymbolData p_lines = charsToSymbolData[&p];
 		std::cout << "accessed p: " << p_lines.getDrawLines(1.0).size() << std::endl;
 	}
 	SymbolData *getSymbolFromChar (char c) {
 		std::cout << "Accessing " << c << " from map." << std::endl;
-		//char * cptr = &c;
-		return &charsToSymbolData[c];
+		char * cptr = &c;
+		return &charsToSymbolData[cptr];
 	}
 };
 
