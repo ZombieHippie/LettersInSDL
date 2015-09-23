@@ -7,10 +7,9 @@
 // that is defined in that file. 
 #include <cstdlib>
 #include <iostream>
-#include <string>
+#include <cstring>
 #include <vector>
 #include <fstream>
-#include <cstring>
 #include <algorithm>
 #include <map>
 
@@ -35,7 +34,14 @@ public:
 		Point res(x * scale, y * scale);
 		return res;
 	}
-
+	std::string toString() const {
+		std::string res = "(";
+		res += std::to_string(x);
+		res += ",";
+		res += std::to_string(y);
+		res += ")";
+		return res;
+	}
 	friend std::ostream& operator<<(std::ostream& os, const Point& p);
 private:
 	float x;
@@ -43,7 +49,7 @@ private:
 }; // end class Point
 // Point operator stream
 std::ostream& operator<<(std::ostream& os, const Point& p) {
-	os << '(' << p.x << ',' << p.y << ')';
+	os << p.toString();
 	return os;
 }
 //--------------------------------------------------------------------------
@@ -60,8 +66,11 @@ private:
 public:
 	SymbolData() {
 		std::vector<Line> lines();
+		std::cout << "Declared empty" << std::endl;
 	};
-	SymbolData(std::vector<Line> givenLines): lines(givenLines) {};
+	SymbolData(std::vector<Line> givenLines): lines(givenLines) {
+		std::cout << "Declared with " << lines.size() << " lines" << std::endl;
+	};
 	// returns a vector of a series of points that will draw the symbol
 	// at the correct scale
 	std::vector<DrawLine> getDrawLines(float scale) {
@@ -80,15 +89,23 @@ public:
 	}
 };
 
+struct cmp_char2
+{
+	bool operator()(char const *a, char const *b) const
+	{
+		return std::strcmp(a, b) == 0;
+	}
+};
+
 class SymbolManager {
-	std::map<char, SymbolData> charsToSymbolData;
+	std::map<char *, SymbolData, cmp_char2> charsToSymbolData;
 public:
 	static constexpr float CHAR_WIDTH = 9.0; // width of symbols
 	static constexpr float TYPE_KERNING = .5; // distance between symbols
 	static constexpr float CHAR_HEIGHT = 16.0; // height of symbols
 	SymbolManager() {
-		std::map<char, SymbolData> charsToSymbolData;
-
+		std::map<char *, SymbolData> charsToSymbolData;
+		
 		// add 'p' test data
 		Point line1p1(0,6);
 		Point line1p2(0,15);
@@ -109,10 +126,15 @@ public:
 		lines.push_back(line1);
 		lines.push_back(line2);
 		SymbolData testA(lines);
-		std::pair<char, SymbolData> kvPair('p', testA);
+		char p = 'p';
+		std::pair<char *, SymbolData> kvPair(&p, testA);
 		charsToSymbolData.insert(kvPair);
+		SymbolData p_lines = charsToSymbolData[p];
+		std::cout << "accessed p: " << p_lines.getDrawLines(1.0).size() << std::endl;
 	}
 	SymbolData *getSymbolFromChar (char c) {
+		std::cout << "Accessing " << c << " from map." << std::endl;
+		//char * cptr = &c;
 		return &charsToSymbolData[c];
 	}
 };
@@ -121,6 +143,11 @@ class Application {
 public:
 	Application() {}
 	void run() {
+		
+		// Set output of program to file
+		freopen( "project1.log", "wt", stdout ); 
+		freopen( "project1.log", "wt", stderr );
+		
 		SDLDriver driver;
 
 		// Make a map of the letters to points
@@ -141,17 +168,19 @@ private:
 	// looks up symbol, and draws
 	void drawChar(SymbolManager *manager, char c, float x, float y, float scale) {
 		SymbolData *symbol_to_be_drawn = manager->getSymbolFromChar(c);
+		std::cout << "got " << c << " from manager" << std::endl;
 		std::vector<DrawLine> lns = symbol_to_be_drawn->getDrawLines(scale);
+		std::cout << "Drawing character: '" << c << "' (" << lns.size() << " lines)" << std::endl;
 		for (std::vector<DrawLine>::iterator itLn = lns.begin(); itLn < lns.end(); itLn++) {
 			DrawLine points = *itLn;
 			// begin drawing lines with SDL
-			std::cout << "Start drawing line" << std::endl;
+			printf("Start drawing line\n");
 			for (DrawLine::iterator itP = points.begin(); itP < points.end(); itP++) {
 				Point pointToDraw = *itP;
-				std::cout << pointToDraw << std::endl;
+				printf(pointToDraw.toString().c_str());
 			}
 			// end drawing lines with SDL
-			std::cout << "End drawing line" << std::endl;
+			printf("\nEnd drawing line\n");
 		}
 	}
 	// looks up each symbol and draws

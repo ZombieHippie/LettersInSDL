@@ -1,0 +1,15 @@
+cmpres = 0
+cmpres2 = -1
+cmpres3 = 1
+Declared with 2 lines
+accessed p: 2
+p == p = 1  8
+0
+p == p = 1  8
+0
+p == e = 1  8
+0
+Accessing p from map.
+Declared empty
+got p from manager
+Drawing character: 'p' (0 lines)
