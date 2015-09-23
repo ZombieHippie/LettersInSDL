@@ -89,23 +89,21 @@ public:
 	}
 };
 
-struct cmp_char2
-{
-	bool operator()(char const *a, char const *b) const
-	{
-		return std::strcmp(a, b) == 0;
-	}
+struct char_cmp { 
+    bool operator () (const char *a,const char *b) const 
+    {
+        return strcmp(a,b)<0;
+    } 
 };
+typedef std::map<const char *, SymbolData, char_cmp> Map;
 
 class SymbolManager {
-	std::map<char *, SymbolData, cmp_char2> charsToSymbolData;
+	Map charsToSymbolData;
 public:
 	static constexpr float CHAR_WIDTH = 9.0; // width of symbols
 	static constexpr float TYPE_KERNING = .5; // distance between symbols
 	static constexpr float CHAR_HEIGHT = 16.0; // height of symbols
 	SymbolManager() {
-		std::map<char *, SymbolData> charsToSymbolData;
-		
 		// add 'p' test data
 		Point line1p1(0,6);
 		Point line1p2(0,15);
@@ -127,14 +125,20 @@ public:
 		lines.push_back(line2);
 		SymbolData testA(lines);
 		char p = 'p';
-		std::pair<char *, SymbolData> kvPair(&p, testA);
-		charsToSymbolData.insert(kvPair);
+		charsToSymbolData.insert(Map::value_type("p", testA));
 		SymbolData p_lines = charsToSymbolData[&p];
 		std::cout << "accessed p: " << p_lines.getDrawLines(1.0).size() << std::endl;
 	}
 	SymbolData *getSymbolFromChar (char c) {
 		std::cout << "Accessing " << c << " from map." << std::endl;
 		char * cptr = &c;
+		char p = 'p';
+		std::cout << "Compare " << strcmp(cptr, &p) << " " << cptr << " " << p << std::endl;
+		//return &charsToSymbolData[cptr];
+		char p1 = 'm';
+		std::cout << "Compare " << strcmp(cptr, &p1) << " " << p1 <<  std::endl;
+		char p2 = 'q';
+		std::cout << "Compare " << strcmp(cptr, &p2) << " " << p2 <<  std::endl;
 		return &charsToSymbolData[cptr];
 	}
 };
@@ -159,7 +163,7 @@ public:
 
 
 
-		waitUntilQuit(&driver);
+		//waitUntilQuit(&driver);
 	}
 private:
 	// Use the symbol Manager to interact with holding the symbols

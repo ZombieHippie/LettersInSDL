@@ -1,6 +1,15 @@
 Declared with 2 lines
-accessed p: 2
-Accessing p from map.
 Declared empty
+accessed p: 0
+Accessing p from map.
+Compare 0 p p
+Compare 1 m
+Compare -1 q
 got p from manager
-Drawing character: 'p' (0 lines)
+Drawing character: 'p' (2 lines)
+Start drawing line
+(0.000000,0.000000)(0.000000,0.000000)
+End drawing line
+Start drawing line
+(0.000000,0.000000)(0.000000,0.000000)(0.000000,0.000000)(0.000000,0.000000)(0.000000,0.000000)(0.000000,0.000000)
+End drawing line
