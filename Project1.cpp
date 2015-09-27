@@ -171,7 +171,7 @@ typedef std::map<const char *, SymbolData, char_cmp> Map;
 
 
 class SymbolManager {
-	Map charsToSymbolData;
+	std::vector<SymbolData> charsToSymbolData;
 public:
 	static constexpr float CHAR_WIDTH = 9.0; // width of symbols
 	static constexpr float TYPE_KERNING = .5; // distance between symbols
@@ -179,37 +179,18 @@ public:
 	SymbolManager() {
 		Point dummyPoint;
 		std::vector<Point> dummyCharacter;
-		std::vector<std::vector<Point>> dummyFont;
-		#include "./CharDefs.h"
-		
-		std::cout << dummyFont.size();
-		
-		// add 'p' test data
-		Point line1p1(0,6);
-		Point line1p2(0,15);
-		Line line1 {
-			line1p1, line1p2
-		};
-		Point line2p1(2,6);
-		Point line2p2(5,6);
-		Point line2p3(7,8);
-		Point line2p4(7,10);
-		Point line2p5(5,12);
-		Point line2p6(2,12);
-		Line line2 {
-			line2p1, line2p2, line2p3,
-			line2p4, line2p5, line2p6
-		};
+		std::vector<Line> dummyFont;
+		#include "./CharDefs.h"		
 		std::vector<Line> lines;
-		lines.push_back(line1);
-		lines.push_back(line2);
-		SymbolData testA(lines);
-		charsToSymbolData.insert(Map::value_type("p", testA));
+		for (int i = 0; i < dummyFont.size(); i++) {
+			std::vector<Line> charLines;
+			charLines.push_back(dummyFont[i]);
+			SymbolData data(charLines);
+			charsToSymbolData.push_back(data);
+		}
 	}
 	SymbolData *getSymbolFromChar (char c) {
-		char * cptr = &c;
-    	Map::iterator it = charsToSymbolData.find(cptr);
-    	return &((*it).second);
+		return &charsToSymbolData[c - 32];
 	}
 };
 
@@ -228,14 +209,14 @@ public:
 
 
 		// draw sample stuff
-		drawChar('p', 10, 10, 1.0);
-		std::string test = "CSC 325";
-		char tab2[1024];
-		strncpy(tab2, test.c_str(), sizeof(tab2));
-		tab2[sizeof(tab2) - 1] = 0;
-		drawChars(tab2, x, y, 1.0);
-
-
+		drawChar('p', 20, 10, 1.0);
+		//std::string test = "CSC 325";
+		//char tab2[1024];
+		//strncpy(tab2, test.c_str(), sizeof(tab2));
+		//tab2[sizeof(tab2) - 1] = 0;
+		//int x = 10;
+		//int y = 30;
+		//drawChars(tab2, x, y, 1.0);
 
 		waitUntilQuit();
 	}
