@@ -146,13 +146,13 @@ private:
 		SDL_Rect fillRect = { static_cast<int>(p->getX() * size - radius * size),
 			 static_cast<int>(p->getY() * size - radius * size),
 			  radius * 2 * size, radius * 2 * size };
-		SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0x33);
+		SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0xFF);
 		SDL_RenderFillRect(gRenderer, &fillRect);
 		SDL_RenderPresent(gRenderer);
 	}
 	void drawLine(Point* a, Point* b, Uint8 color_r, Uint8 color_g, Uint8 color_b) {
 		if (a != nullptr && b != nullptr) {
-			SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0x33);
+			SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0xFF);
 			SDL_RenderDrawLine(gRenderer, a->getX() * size, a->getY() * size,
 			 b->getX() * size, b->getY() * size);
 			//Update screen
