@@ -15,7 +15,7 @@
 
 //--------------------------------------------------------------------------
 //Using SDL and standard IO
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -95,7 +95,8 @@ class SDLDriver {
 	const int size = 5;
 public:
 	SDLDriver() {
-		gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+		gWindow = SDL_CreateWindow("Project 1", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+		 SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 		if (gWindow == NULL)
 		{
 			printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
@@ -135,7 +136,9 @@ public:
 private:
 	void drawDot(Point* p, int radius, Uint8 color_r, Uint8 color_g, Uint8 color_b) {
 		//Update screen
-		SDL_Rect fillRect = { p->getX() * size - radius * size, p->getY() * size - radius * size, radius * 2 * size, radius * 2 * size };
+		SDL_Rect fillRect = { static_cast<int>(p->getX() * size - radius * size),
+			 static_cast<int>(p->getY() * size - radius * size),
+			  radius * 2 * size, radius * 2 * size };
 		SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0x33);
 		SDL_RenderFillRect(gRenderer, &fillRect);
 		SDL_RenderPresent(gRenderer);
@@ -143,7 +146,8 @@ private:
 	void drawLine(Point* a, Point* b, Uint8 color_r, Uint8 color_g, Uint8 color_b) {
 		if (a != nullptr && b != nullptr) {
 			SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0x33);
-			SDL_RenderDrawLine(gRenderer, a->getX() * size, a->getY() * size, b->getX() * size, b->getY() * size);
+			SDL_RenderDrawLine(gRenderer, a->getX() * size, a->getY() * size,
+			 b->getX() * size, b->getY() * size);
 			//Update screen
 			SDL_RenderPresent(gRenderer);
 		}
