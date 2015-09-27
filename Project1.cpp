@@ -169,6 +169,7 @@ struct char_cmp {
 };
 typedef std::map<const char *, SymbolData, char_cmp> Map;
 
+
 class SymbolManager {
 	Map charsToSymbolData;
 public:
@@ -228,7 +229,11 @@ public:
 
 		// draw sample stuff
 		drawChar('p', 10, 10, 1.0);
-		// drawChars(&driver, char[]{'C','s','c',' ','3','2','5'}, x, y)
+		std::string test = "CSC 325";
+		char tab2[1024];
+		strncpy(tab2, test.c_str(), sizeof(tab2));
+		tab2[sizeof(tab2) - 1] = 0;
+		drawChars(tab2, x, y, 1.0);
 
 
 
@@ -246,11 +251,11 @@ private:
 		for (std::vector<Line>::iterator itLn = lns.begin(); itLn < lns.end(); itLn++) {
 			Line points = *itLn;
 			// begin drawing lines with SDL
-			printf("Start drawing line\n");
+			std::cout << "Start drawing line\n";
 			Point * lastPoint = nullptr;
 			for (Line::iterator itP = points.begin(); itP < points.end(); itP++) {
 				Point pointToDraw = *itP;
-				printf(pointToDraw.toString().c_str());
+				std::cout << pointToDraw;
 				if (lastPoint != nullptr) {
 					//pointToDraw = pointToDraw.mod(x, y);
 					driver.drawEdge(&pointToDraw, lastPoint);
@@ -258,7 +263,7 @@ private:
 				lastPoint = &pointToDraw;
 			}
 			// end drawing lines with SDL
-			printf("\nEnd drawing line\n");
+			std::cout << "\nEnd drawing line\n";
 		}
 	}
 	// looks up each symbol and draws
