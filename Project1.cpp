@@ -238,6 +238,7 @@ private:
 				Point pointToDraw = *itP;
 				printf(pointToDraw.toString().c_str());
 				if (lastPoint != nullptr) {
+					//pointToDraw = pointToDraw.mod(x, y);
 					driver.drawEdge(&pointToDraw, lastPoint);
 				}
 				lastPoint = &pointToDraw;
@@ -248,11 +249,10 @@ private:
 	}
 	// looks up each symbol and draws
 	void drawChars(char chars[], float x, float y, float scale) {
-		float dx = SymbolManager::CHAR_WIDTH * scale;
 		float char_relative_x;
 		int length_of_chars = sizeof(chars) / sizeof(chars[0]);
 		for (int char_index = 0; char_index < length_of_chars; char_index++) {
-			char_relative_x = scale * float(char_index) * SymbolManager::TYPE_KERNING;
+			char_relative_x = scale * float(char_index) * (SymbolManager::TYPE_KERNING + SymbolManager::CHAR_WIDTH);
 			drawChar(chars[char_index], x + char_relative_x, y, scale);
 		}
 	}
