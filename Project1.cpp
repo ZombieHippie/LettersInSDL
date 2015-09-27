@@ -24,11 +24,14 @@ const int SCREEN_HEIGHT = 480;
 class Point {
 public:
 	// Constructor. Any setup operation you wish for the class.
+	Point() {
+		//std::cout << "Making new empty point..." << std::endl;
+	}
 	Point(float px, float py) : x(px), y(py){
-		std::cout << "x(" << x << ") y(" << y << ")" << std::endl;
+		//std::cout << "x(" << x << ") y(" << y << ")" << std::endl;
 	} // end constructor
-	float getX() const { return x; }
-	float getY() const { return y; }
+	float getX() { return x; }
+	float getY() { return y; }
 	// return new Point scaled version of this Point
 	Point scale(float scale) const {
 		Point res(x * scale, y * scale);
@@ -43,9 +46,13 @@ public:
 		return res;
 	}
 	friend std::ostream& operator<<(std::ostream& os, const Point& p);
+	Point& operator=(Point& p) {
+		this->x = p.getX();
+		this->y = p.getY();
+	}
 private:
-	const float x;
-	const float y;
+	float x;
+	float y;
 }; // end class Point
 // Point operator stream
 std::ostream& operator<<(std::ostream& os, const Point& p) {
@@ -169,6 +176,13 @@ public:
 	static constexpr float TYPE_KERNING = .5; // distance between symbols
 	static constexpr float CHAR_HEIGHT = 16.0; // height of symbols
 	SymbolManager() {
+		Point dummyPoint;
+		std::vector<Point> dummyCharacter;
+		std::vector<std::vector<Point>> dummyFont;
+		#include "./CharDefs.h"
+		
+		std::cout << dummyFont.size();
+		
 		// add 'p' test data
 		Point line1p1(0,6);
 		Point line1p2(0,15);
