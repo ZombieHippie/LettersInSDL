@@ -209,7 +209,7 @@ public:
 
 
 		// draw sample stuff
-		drawChar('p', 20, 10, 1.0);
+		drawChar('J', 1, 1, 1.0);
 		//std::string test = "CSC 325";
 		//char tab2[1024];
 		//strncpy(tab2, test.c_str(), sizeof(tab2));
@@ -235,13 +235,13 @@ private:
 			std::cout << "Start drawing line\n";
 			Point * lastPoint = nullptr;
 			for (Line::iterator itP = points.begin(); itP < points.end(); itP++) {
-				Point pointToDraw = *itP;
+				Point * pointToDraw = &(*itP); // Changed this to be a pointer to the iterator's value 9/29 jdm
 				std::cout << pointToDraw;
 				if (lastPoint != nullptr) {
 					//pointToDraw = pointToDraw.mod(x, y);
-					driver.drawEdge(&pointToDraw, lastPoint);
+					driver.drawEdge(pointToDraw, lastPoint); // pointToDraw value, not memory location 9/29 jdm
 				}
-				lastPoint = &pointToDraw;
+				lastPoint = pointToDraw; // pointToDraw value, not memory location 9/29 jdm
 			}
 			// end drawing lines with SDL
 			std::cout << "\nEnd drawing line\n";
@@ -299,4 +299,3 @@ int main(int argc, char *argv[])
 	app.run();
 	return 0;
 } // end main
-
