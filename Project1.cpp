@@ -11,7 +11,6 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
-#include <map>
 
 //--------------------------------------------------------------------------
 //Using SDL and standard IO
@@ -30,11 +29,15 @@ public:
 	Point(float px, float py) : x(px), y(py){
 		//std::cout << "x(" << x << ") y(" << y << ")" << std::endl;
 	} // end constructor
-	float getX() { return x; }
-	float getY() { return y; }
+	float getX() const { return x; }
+	float getY() const { return y; }
 	// return new Point scaled version of this Point
 	Point scale(float scale) const {
 		Point res(x * scale, y * scale);
+		return res;
+	}
+	Point move(float dx, float dy) const {
+		Point res(x + dx, y + dy);
 		return res;
 	}
 	std::string toString() const {
@@ -46,10 +49,10 @@ public:
 		return res;
 	}
 	friend std::ostream& operator<<(std::ostream& os, const Point& p);
-	Point& operator=(Point& p) {
+/*	Point& operator=(Point& p) {
 		this->x = p.getX();
 		this->y = p.getY();
-	}
+	}*/
 private:
 	float x;
 	float y;
@@ -98,8 +101,6 @@ class SDLDriver {
 
 	//The window renderer
 	SDL_Renderer* gRenderer = NULL;
-
-	const int size = 5;
 public:
 	SDLDriver() {
 		gWindow = SDL_CreateWindow("Project 1", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -123,10 +124,9 @@ public:
 			}
 		}
 	}
-	void drawEdge(Point* a, Point* b) {
+	void drawEdge(const Point a, const Point b) {
 		drawLine(a, b, 0xaa, 0xaa, 0xaa);
 	}
-	void drawPoint(Point* p) { drawDot(p, 1, 0xFF, 0xFF, 0x00); }
 	void delay(int milliseconds) {
 		SDL_Delay(milliseconds);
 	}
@@ -141,40 +141,21 @@ public:
 		SDL_Quit();
 	}
 private:
-	void drawDot(Point* p, int radius, Uint8 color_r, Uint8 color_g, Uint8 color_b) {
-		//Update screen
-		SDL_Rect fillRect = { static_cast<int>(p->getX() * size - radius * size),
-			 static_cast<int>(p->getY() * size - radius * size),
-			  radius * 2 * size, radius * 2 * size };
+	void drawLine(const Point a, const Point b, Uint8 color_r, Uint8 color_g, Uint8 color_b) {
 		SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0xFF);
-		SDL_RenderFillRect(gRenderer, &fillRect);
+		SDL_RenderDrawLine(gRenderer, a.getX(), a.getY(),
+			b.getX(), b.getY());
+		//Update screen
 		SDL_RenderPresent(gRenderer);
 	}
-	void drawLine(Point* a, Point* b, Uint8 color_r, Uint8 color_g, Uint8 color_b) {
-		if (a != nullptr && b != nullptr) {
-			SDL_SetRenderDrawColor(gRenderer, color_r, color_g, color_b, 0xFF);
-			SDL_RenderDrawLine(gRenderer, a->getX() * size, a->getY() * size,
-			 b->getX() * size, b->getY() * size);
-			//Update screen
-			SDL_RenderPresent(gRenderer);
-		}
-	}
 };
-
-struct char_cmp { 
-    bool operator () (const char *a,const char *b) const 
-    {
-        return strcmp(a,b)<0;
-    } 
-};
-typedef std::map<const char *, SymbolData, char_cmp> Map;
 
 
 class SymbolManager {
 	std::vector<SymbolData> charsToSymbolData;
 public:
 	static constexpr float CHAR_WIDTH = 9.0; // width of symbols
-	static constexpr float TYPE_KERNING = .5; // distance between symbols
+	static constexpr float TYPE_KERNING = 1.0; // distance between symbols
 	static constexpr float CHAR_HEIGHT = 16.0; // height of symbols
 	SymbolManager() {
 		Point dummyPoint;
@@ -182,6 +163,7 @@ public:
 		std::vector<Line> dummyFont;
 		#include "./CharDefs.h"		
 		std::vector<Line> lines;
+
 		for (int i = 0; i < dummyFont.size(); i++) {
 			std::vector<Line> charLines;
 			charLines.push_back(dummyFont[i]);
@@ -209,18 +191,29 @@ public:
 
 
 		// draw sample stuff
-		drawChar('J', 1, 1, 1.0);
-		//std::string test = "CSC 325";
-		//char tab2[1024];
-		//strncpy(tab2, test.c_str(), sizeof(tab2));
-		//tab2[sizeof(tab2) - 1] = 0;
-		//int x = 10;
-		//int y = 30;
-		//drawChars(tab2, x, y, 1.0);
+		drawChar('J', 1, 1, 8);
+		
+		float font_size = 20;
+		for (float i = 0; i < 3; i++) {
+			drawString("Hello World", 50.0, 20.0 + (i * font_size * 1.8), font_size);
+		}
+		drawString("The quick brown fox jumped over the lazy dog.", 20, 140, 12.0);
+		drawString("THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG.", 20, 170, 12.0);
+		drawString("Cole Lawrence", 20, 210, 12.0);
+		drawString("Josiah McGurty", 40, 240, 12.0);
+		drawString("Andrew Rowell", 60, 270, 12.0);
+		drawString("Other Chars: ;,.!?#$&\"'()*%+-/\\", 20, 300, 12.0);
+		drawString("1234567890", 20, 330, 12.0);
 
 		waitUntilQuit();
 	}
 private:
+	void drawString(std::string str, float x, float y, float font_size) {
+		char tab2[1024];
+		strncpy(tab2, str.c_str(), sizeof(tab2));
+		tab2[sizeof(tab2) - 1] = 0;
+		drawChars(tab2, str.size(), x, y, font_size / SymbolManager::CHAR_WIDTH);
+	}
 	// Use the symbol Manager to interact with holding the symbols
 	// map of letters to point maps
 
@@ -233,24 +226,24 @@ private:
 			Line points = *itLn;
 			// begin drawing lines with SDL
 			std::cout << "Start drawing line\n";
-			Point * lastPoint = nullptr;
+			Point lastPoint;
 			for (Line::iterator itP = points.begin(); itP < points.end(); itP++) {
-				Point * pointToDraw = &(*itP); // Changed this to be a pointer to the iterator's value 9/29 jdm
+				Point pointToDraw = *itP;
+				pointToDraw = pointToDraw.move(x, y);
 				std::cout << pointToDraw;
-				if (lastPoint != nullptr) {
-					//pointToDraw = pointToDraw.mod(x, y);
-					driver.drawEdge(pointToDraw, lastPoint); // pointToDraw value, not memory location 9/29 jdm
+				if (itP != points.begin()) {
+					driver.drawEdge(pointToDraw, lastPoint);
 				}
-				lastPoint = pointToDraw; // pointToDraw value, not memory location 9/29 jdm
+				lastPoint = pointToDraw;
 			}
 			// end drawing lines with SDL
 			std::cout << "\nEnd drawing line\n";
 		}
 	}
 	// looks up each symbol and draws
-	void drawChars(char chars[], float x, float y, float scale) {
+	void drawChars(char chars[], int n, float x, float y, float scale) {
 		float char_relative_x;
-		int length_of_chars = sizeof(chars) / sizeof(chars[0]);
+		int length_of_chars = n;
 		for (int char_index = 0; char_index < length_of_chars; char_index++) {
 			char_relative_x = scale * float(char_index) * (SymbolManager::TYPE_KERNING + SymbolManager::CHAR_WIDTH);
 			drawChar(chars[char_index], x + char_relative_x, y, scale);
