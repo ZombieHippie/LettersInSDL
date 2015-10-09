@@ -1,6 +1,6 @@
 # LettersInSDL
 
-[!Screen shot](/screenshots/1-move-authors-names.png)
+![Screen shot](/screenshots/1-move-authors-names.png)
 
 > For the protection of our integrity, we make no reference to the course this project addresses, nor do we call this repo a name similar to the project's name or number.
 
